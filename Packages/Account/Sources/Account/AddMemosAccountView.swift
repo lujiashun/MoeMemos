@@ -11,16 +11,17 @@ import MemosV0Service
 import DesignSystem
 
 @MainActor
-struct AddMemosAccountView: View {
+public struct AddMemosAccountView: View {
     @State private var host = ""
     @State private var accessToken = ""
-    let dismiss: DismissAction
+        @Environment(\.dismiss) private var dismiss
     @Environment(AccountViewModel.self) private var accountViewModel
     @State private var loginError: Error?
     @State private var showingErrorToast = false
     @State private var showLoadingToast = false
+    public init() {}
     
-    var body: some View {
+    public var body: some View {
         VStack {
             Text("login.hint")
                 .multilineTextAlignment(.center)

@@ -60,7 +60,7 @@ public struct AddAccountView: View {
             .navigationDestination(for: AddAccountRouter.self) { router in
                 switch router {
                 case .addMemosAccount:
-                    AddMemosAccountView(dismiss: dismiss)
+                    AddMemosAccountView()
                 }
             }
         }

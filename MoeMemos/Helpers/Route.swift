@@ -46,7 +46,7 @@ extension View {
                 MemoInput(memo: memo)
                     .withEnvironments()
             case .addAccount:
-                AddAccountView()
+                AddMemosAccountView()
                     .withEnvironments()
             }
         }
