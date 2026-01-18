@@ -20,7 +20,7 @@ extension MemosV1Memo {
             content: content ?? "",
             pinned: pinned ?? false,
             rowStatus: state == .ARCHIVED ? .archived : .normal,
-            visibility: visibility?.toMemoVisibility() ?? .private,
+            visibility: visibility.toMemoVisibility(),
             resources: attachments?.map { $0.toResource(host: host) } ?? [],
             createdAt: createTime ?? .now,
             updatedAt: updateTime ?? .now,
@@ -34,7 +34,7 @@ extension MemosV1Resource {
         if let externalLink = externalLink, !externalLink.isEmpty, let url = URL(string: externalLink) {
             return url
         }
-        return hostURL.appending(path: "file").appending(path: name ?? "").appending(path: filename ?? "")
+        return hostURL.appending(path: "file").appending(path: name ?? "").appending(path: filename)
     }
     
     func toResource(host: URL) -> Resource {
@@ -44,9 +44,9 @@ extension MemosV1Resource {
         }
         
         return Resource(
-            filename: filename ?? "",
+            filename: filename,
             size: size,
-            mimeType: _type ?? "application/octet-stream",
+            mimeType: _type,
             createdAt: createTime ?? .now,
             updatedAt: createTime ?? .now,
             remoteId: name,

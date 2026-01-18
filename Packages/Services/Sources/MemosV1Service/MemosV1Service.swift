@@ -77,7 +77,11 @@ public final class MemosV1Service: RemoteService {
     }
     
     public func createMemo(content: String, visibility: MemoVisibility?, resources: [Resource], tags: [String]?) async throws -> Memo {
-        let resp = try await client.MemoService_CreateMemo(body: .json(.init(content: content, visibility: visibility.map(MemosV1Visibility.init(memoVisibility:)))))
+        let resp = try await client.MemoService_CreateMemo(body: .json(MemosV1Memo(
+            state: .NORMAL,
+            content: content,
+            visibility: visibility.map { MemosV1Visibility(memoVisibility: $0) } ?? .PRIVATE
+        )))
         let memo = try resp.ok.body.json
         
         var result = memo.toMemo(host: hostURL)
@@ -89,7 +93,7 @@ public final class MemosV1Service: RemoteService {
         let memosResources: [MemosV1Resource] = resources.compactMap {
             var resource: MemosV1Resource? = nil
             if let remoteId = $0.remoteId {
-                resource = MemosV1Resource(name: getName(remoteId: remoteId))
+                resource = MemosV1Resource(name: getName(remoteId: remoteId), filename: $0.filename, _type: $0.mimeType)
             }
             return resource
         }
@@ -100,10 +104,11 @@ public final class MemosV1Service: RemoteService {
     }
     
     public func updateMemo(remoteId: String, content: String?, resources: [Resource]?, visibility: MemoVisibility?, tags: [String]?, pinned: Bool?) async throws -> Memo {
-        let resp = try await client.MemoService_UpdateMemo(path: .init(memo: getId(remoteId: remoteId)), body: .json(.init(
+        let resp = try await client.MemoService_UpdateMemo(path: .init(memo: getId(remoteId: remoteId)), body: .json(MemosV1Memo(
+            state: .NORMAL,
             updateTime: .now,
-            content: content,
-            visibility: visibility.map(MemosV1Visibility.init(memoVisibility:)),
+            content: content ?? "",
+            visibility: visibility.map { MemosV1Visibility(memoVisibility: $0) } ?? .PRIVATE,
             pinned: pinned
         )))
         let memo = try resp.ok.body.json
@@ -113,7 +118,7 @@ public final class MemosV1Service: RemoteService {
         let memosResources: [MemosV1Resource] = resources.compactMap {
             var resource: MemosV1Resource? = nil
             if let remoteId = $0.remoteId {
-                resource = MemosV1Resource(name: getName(remoteId: remoteId))
+                resource = MemosV1Resource(name: getName(remoteId: remoteId), filename: $0.filename, _type: $0.mimeType)
             }
             return resource
         }
@@ -129,12 +134,12 @@ public final class MemosV1Service: RemoteService {
     }
     
     public func archiveMemo(remoteId: String) async throws {
-        let resp = try await client.MemoService_UpdateMemo(path: .init(memo: getId(remoteId: remoteId)), body: .json(.init(state: .ARCHIVED)))
+        let resp = try await client.MemoService_UpdateMemo(path: .init(memo: getId(remoteId: remoteId)), body: .json(MemosV1Memo(state: .ARCHIVED, content: "", visibility: .PRIVATE)))
         _ = try resp.ok
     }
     
     public func restoreMemo(remoteId: String) async throws {
-        let resp = try await client.MemoService_UpdateMemo(path: .init(memo: getId(remoteId: remoteId)), body: .json(.init(state: .NORMAL)))
+        let resp = try await client.MemoService_UpdateMemo(path: .init(memo: getId(remoteId: remoteId)), body: .json(MemosV1Memo(state: .NORMAL, content: "", visibility: .PRIVATE)))
         _ = try resp.ok
     }
     
@@ -161,7 +166,7 @@ public final class MemosV1Service: RemoteService {
     public func createResource(filename: String, data: Data, type: String, memoRemoteId: String?) async throws -> Resource {
         let resp = try await client.AttachmentService_CreateAttachment(body: .json(.init(
             filename: filename,
-            content: .init(data),
+            content: data.base64EncodedString(),
             _type: type,
             memo: memoRemoteId.map(getName(remoteId:))
         )))
