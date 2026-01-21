@@ -180,16 +180,18 @@ public final class MemosV1Service: RemoteService {
     }
     
     public func getCurrentUser() async throws -> User {
-        let resp = try await client.AuthService_GetCurrentSession()
+        let resp = try await client.AuthService_GetCurrentUser()
         
         let json = try resp.ok.body.json
-        guard let user = json.user else {
+        guard let userWrapper = json.user else {
             throw MoeMemosError.notLogin
         }
-        
+
+        let user = userWrapper.value1
+
         guard let name = user.name else { throw MoeMemosError.unsupportedVersion }
         let userSettingResp = try await client.UserService_GetUserSetting(path: .init(user: getId(remoteId: name), setting: "GENERAL"))
-        
+
         let setting = try userSettingResp.ok.body.json
         return await toUser(user, setting: setting)
     }
