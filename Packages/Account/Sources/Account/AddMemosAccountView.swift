@@ -13,7 +13,8 @@ import DesignSystem
 @MainActor
 public struct AddMemosAccountView: View {
     @State private var host = ""
-    @State private var accessToken = ""
+    @State private var username = ""
+    @State private var password = ""
         @Environment(\.dismiss) private var dismiss
     @Environment(AccountViewModel.self) private var accountViewModel
     @State private var loginError: Error?
@@ -36,9 +37,11 @@ public struct AddMemosAccountView: View {
                 .disableAutocorrection(true)
                 .textFieldStyle(.roundedBorder)
             
-            SecureField("login.access-token", text: $accessToken)
+            TextField("login.username", text: $username)
                 .textFieldStyle(.roundedBorder)
-            Text("login.access-token.hint")
+            SecureField("login.password", text: $password)
+                .textFieldStyle(.roundedBorder)
+            Text("login.username-password.hint")
                 .font(.footnote)
                 .foregroundStyle(.secondary)
             
@@ -84,16 +87,17 @@ public struct AddMemosAccountView: View {
         guard let hostURL = URL(string: hostAddress) else { throw MoeMemosError.invalidParams }
         let server = try await detectMemosVersion(hostURL: hostURL)
 
-        let accessToken = accessToken.trimmingCharacters(in: .whitespaces)
-        if accessToken.isEmpty {
+        let username = username.trimmingCharacters(in: .whitespaces)
+        let password = password.trimmingCharacters(in: .whitespaces)
+        if username.isEmpty || password.isEmpty {
             throw MoeMemosError.invalidParams
         }
-        
+
         switch server {
         case .v1(version: _):
-            try await accountViewModel.loginMemosV1(hostURL: hostURL, accessToken: accessToken)
+            try await accountViewModel.loginMemosV1(hostURL: hostURL, username: username, password: password)
         case .v0(version: _):
-            try await accountViewModel.loginMemosV0(hostURL: hostURL, accessToken: accessToken)
+            try await accountViewModel.loginMemosV0(hostURL: hostURL, username: username, password: password)
         }
         dismiss()
     }

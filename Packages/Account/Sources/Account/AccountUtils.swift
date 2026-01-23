@@ -25,13 +25,13 @@ enum MemosVersion {
 }
 
 func detectMemosVersion(hostURL: URL) async throws -> MemosVersion {
-    let v0Service = MemosV0Service(hostURL: hostURL, accessToken: nil)
+    let v0Service = MemosV0Service(hostURL: hostURL, username: nil, password: nil)
     let v0Status = try? await v0Service.getStatus()
     if let version = v0Status?.profile?.version, !version.isEmpty {
         return .v0(version: version)
     }
 
-    let v1Service = MemosV1Service(hostURL: hostURL, accessToken: nil, userId: nil)
+    let v1Service = MemosV1Service(hostURL: hostURL, username: nil, password: nil, userId: nil)
     let v1Profile = try await v1Service.getWorkspaceProfile()
     if let version = v1Profile.version, !version.isEmpty {
         return .v1(version: version)

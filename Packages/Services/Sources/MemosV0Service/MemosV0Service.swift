@@ -17,17 +17,19 @@ public final class MemosV0Service: RemoteService {
     private let hostURL: URL
     private let urlSession: URLSession
     private let client: Client
-    private let accessToken: String?
+    private let username: String?
+    private let password: String?
 
-    public nonisolated init(hostURL: URL, accessToken: String?) {
+    public nonisolated init(hostURL: URL, username: String?, password: String?) {
         self.hostURL = hostURL
-        self.accessToken = accessToken
+        self.username = username
+        self.password = password
         urlSession = URLSession(configuration: URLSessionConfiguration.default)
         client = Client(
             serverURL: hostURL,
             transport: URLSessionTransport(configuration: .init(session: urlSession)),
             middlewares: [
-                AccessTokenAuthenticationMiddleware(accessToken: accessToken)
+                UsernamePasswordAuthenticationMiddleware(username: username, password: password)
             ]
         )
     }
@@ -175,11 +177,11 @@ public final class MemosV0Service: RemoteService {
     }
     
     public func download(url: URL, mimeType: String? = nil) async throws -> URL {
-        return try await ServiceUtils.download(urlSession: urlSession, url: url, mimeType: mimeType, middleware: rawAccessTokenMiddlware(hostURL: hostURL, accessToken: accessToken))
+        return try await ServiceUtils.download(urlSession: urlSession, url: url, mimeType: mimeType, middleware: rawBasicAuthMiddlware(hostURL: hostURL, username: username, password: password))
     }
-    
+
     func downloadData(url: URL) async throws -> Data {
-        return try await ServiceUtils.downloadData(urlSession: urlSession, url: url, middleware: rawAccessTokenMiddlware(hostURL: hostURL, accessToken: accessToken))
+        return try await ServiceUtils.downloadData(urlSession: urlSession, url: url, middleware: rawBasicAuthMiddlware(hostURL: hostURL, username: username, password: password))
     }
     
     func toUser(_ memosUser: MemosV0User) async -> User {

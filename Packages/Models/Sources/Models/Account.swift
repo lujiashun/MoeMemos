@@ -9,16 +9,16 @@ import Foundation
 
 public enum Account: Codable, Sendable {
     case local
-    case memosV0(host: String, id: String, accessToken: String)
-    case memosV1(host: String, id: String, accessToken: String)
+    case memosV0(host: String, id: String, username: String, password: String)
+    case memosV1(host: String, id: String, username: String, password: String)
     
     public var key: String {
         switch self {
         case .local:
             return "local"
-        case let .memosV0(host: host, id: id, accessToken: _):
+        case let .memosV0(host: host, id: id, username: _, password: _):
             return "memos:\(host):\(id)"
-        case let .memosV1(host: host, id: id, accessToken: _):
+        case let .memosV1(host: host, id: id, username: _, password: _):
             return "memos:\(host):\(id)"
         }
     }

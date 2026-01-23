@@ -101,9 +101,9 @@ public struct MemosAccountView: View {
             
             var hostURL: URL?
             switch account {
-            case .memosV0(host: let host, id: _, accessToken: _):
+            case .memosV0(host: let host, id: _, username: _, password: _):
                 hostURL = URL(string: host)
-            case .memosV1(host: let host, id: _, accessToken: _):
+            case .memosV1(host: let host, id: _, username: _, password: _):
                 hostURL = URL(string: host)
             case .local:
                 return

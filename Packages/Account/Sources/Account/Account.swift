@@ -42,11 +42,11 @@ public extension Account {
     }
     
     func remoteService() -> RemoteService? {
-        if case .memosV0(host: let host, id: _, accessToken: let accessToken) = self, let hostURL = URL(string: host) {
-            return MemosV0Service(hostURL: hostURL, accessToken: accessToken)
+        if case .memosV0(host: let host, id: _, username: let username, password: let password) = self, let hostURL = URL(string: host) {
+            return MemosV0Service(hostURL: hostURL, username: username, password: password)
         }
-        if case .memosV1(host: let host, id: let userId, accessToken: let accessToken) = self, let hostURL = URL(string: host) {
-            return MemosV1Service(hostURL: hostURL, accessToken: accessToken, userId: userId)
+        if case .memosV1(host: let host, id: let userId, username: let username, password: let password) = self, let hostURL = URL(string: host) {
+            return MemosV1Service(hostURL: hostURL, username: username, password: password, userId: userId)
         }
         return nil
     }
