@@ -48,10 +48,13 @@ public struct AddMemosAccountView: View {
             Button {
                 Task {
                     do {
+                        print("[AddMemosAccountView] login button tapped host:\(host) username:\(username)")
                         showLoadingToast = true
                         try await doLogin()
+                        print("[AddMemosAccountView] login succeeded for host:\(host) username:\(username)")
                         loginError = nil
                     } catch {
+                        print("[AddMemosAccountView] login failed for host:\(host) username:\(username) error:\(error)")
                         loginError = error
                         showingErrorToast = true
                     }
@@ -72,6 +75,7 @@ public struct AddMemosAccountView: View {
     }
     
     private func doLogin() async throws {
+        print("[AddMemosAccountView] doLogin start host:\(host)")
         if host.isEmpty {
             throw MoeMemosError.invalidParams
         }
@@ -99,6 +103,7 @@ public struct AddMemosAccountView: View {
         case .v0(version: _):
             try await accountViewModel.loginMemosV0(hostURL: hostURL, username: username, password: password)
         }
+        print("[AddMemosAccountView] doLogin finished, dismissing")
         dismiss()
     }
 }

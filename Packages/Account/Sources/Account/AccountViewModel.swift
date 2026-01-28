@@ -78,23 +78,29 @@ import MemosV0Service
     
     @MainActor
     func loginMemosV0(hostURL: URL, username: String, password: String) async throws {
+        print("[AccountViewModel] loginMemosV0 start host:\(hostURL.absoluteString) username:\(username)")
         let client = MemosV0Service(hostURL: hostURL, username: username, password: password)
         let user = try await client.getCurrentUser()
+        print("[AccountViewModel] loginMemosV0 fetched user remoteId:\(user.remoteId ?? "nil")")
         guard let id = user.remoteId else { throw MoeMemosError.unsupportedVersion }
         let account = Account.memosV0(host: hostURL.absoluteString, id: id, username: username, password: password)
         try await userActor.deleteUser(currentContext, accountKey: account.key)
         try accountManager.add(account: account)
+        print("[AccountViewModel] loginMemosV0 success accountKey:\(account.key)")
         try await reloadUsers()
     }
     
     @MainActor
     func loginMemosV1(hostURL: URL, username: String, password: String) async throws {
+        print("[AccountViewModel] loginMemosV1 start host:\(hostURL.absoluteString) username:\(username)")
         let client = MemosV1Service(hostURL: hostURL, username: username, password: password, userId: nil)
         let user = try await client.getCurrentUser()
+        print("[AccountViewModel] loginMemosV1 fetched user remoteId:\(user.remoteId ?? "nil")")
         guard let id = user.remoteId else { throw MoeMemosError.unsupportedVersion }
         let account = Account.memosV1(host: hostURL.absoluteString, id: id, username: username, password: password)
         try await userActor.deleteUser(currentContext, accountKey: account.key)
         try accountManager.add(account: account)
+        print("[AccountViewModel] loginMemosV1 success accountKey:\(account.key)")
         try await reloadUsers()
     }
 }

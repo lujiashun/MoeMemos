@@ -16,11 +16,12 @@ import ServiceUtils
 public final class MemosV1Service: RemoteService {
     private let hostURL: URL
     private let urlSession: URLSession
-    private let client: Client
+    private var client: Client
     private let username: String?
     private let password: String?
     private let userId: String?
     private let grpcSetCookieMiddleware = GRPCSetCookieMiddleware()
+    private var accessToken: String?
     
     public nonisolated init(hostURL: URL, username: String?, password: String?, userId: String?) {
         self.hostURL = hostURL
@@ -36,6 +37,47 @@ public final class MemosV1Service: RemoteService {
                 grpcSetCookieMiddleware
             ]
         )
+    }
+
+    private func signInIfNeeded() async throws {
+        if accessToken != nil { return }
+        guard let username = username, let password = password, !username.isEmpty, !password.isEmpty else { return }
+        do {
+            print("[MemosV1Service] signing in to \(hostURL) username:\(username)")
+            let signinURL = hostURL.appending(path: "api").appending(path: "v1").appending(path: "auth").appending(path: "signin")
+            var req = URLRequest(url: signinURL)
+            req.httpMethod = "POST"
+            req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            let payload: [String: Any] = ["passwordCredentials": ["username": username, "password": password]]
+            req.httpBody = try JSONSerialization.data(withJSONObject: payload, options: [])
+            let (data, response) = try await urlSession.data(for: req)
+            if let http = response as? HTTPURLResponse, !(200...299).contains(http.statusCode) {
+                let bodyString = String(data: data, encoding: .utf8) ?? ""
+                print("[MemosV1Service] signIn HTTP \(http.statusCode) body:\(bodyString)")
+                throw URLError(.badServerResponse)
+            }
+            struct SignInResp: Decodable { let accessToken: String? }
+            let decoder = JSONDecoder()
+            let respObj = try decoder.decode(SignInResp.self, from: data)
+            if let token = respObj.accessToken {
+                accessToken = token
+                print("[MemosV1Service] obtained access token, reinitializing client")
+                client = Client(
+                    serverURL: hostURL,
+                    transport: URLSessionTransport(configuration: .init(session: urlSession)),
+                    middlewares: [
+                        AccessTokenAuthenticationMiddleware(accessToken: token),
+                        grpcSetCookieMiddleware
+                    ]
+                )
+            } else {
+                let bodyString = String(data: data, encoding: .utf8) ?? ""
+                print("[MemosV1Service] signIn response missing accessToken body:\(bodyString)")
+            }
+        } catch {
+            print("[MemosV1Service] signIn failed: \(error)")
+            throw error
+        }
     }
     
     public func memoVisibilities() -> [MemoVisibility] {
@@ -182,8 +224,9 @@ public final class MemosV1Service: RemoteService {
     }
     
     public func getCurrentUser() async throws -> User {
+        try await signInIfNeeded()
         let resp = try await client.AuthService_GetCurrentUser()
-        
+
         let json = try resp.ok.body.json
         guard let userWrapper = json.user else {
             throw MoeMemosError.notLogin
